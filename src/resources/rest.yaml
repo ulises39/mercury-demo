@@ -53,3 +53,21 @@ rest:
     methods: ['POST']
     url: "/api/visitors"
     timeout: 10s
+
+  #
+  # Consolidation service
+  #
+  - service: "consolidation.accept"
+    methods: ['POST']
+    url: "/api/visitors/{id}/consolidation/accept"
+    timeout: 10s
+
+  - service: "consolidation.decline"
+    methods: ['POST']
+    url: "/api/visitors/{id}/consolidation/decline"
+    timeout: 10s
+
+  - service: "consolidation.record.attendance"
+    methods: ['POST']
+    url: "/api/visitors/{id}/classes/attendance"
+    timeout: 10s

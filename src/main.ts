@@ -5,6 +5,10 @@ import { ListVisitors } from './person/list-visitors';
 import { GetVisitor } from './person/get-visitor';
 // Welcome service
 import { RegisterVisitor } from './welcome/register-visitor';
+// Consolidation service
+import { AcceptConsolidation } from './consolidation/accept-consolidation';
+import { DeclineConsolidation } from './consolidation/decline-consolidation';
+import { RecordAttendance } from './consolidation/record-attendance';
 
 async function main() {
     // Point Mercury to our application.yml (src/resources/ → dist/resources/ after build)
@@ -16,6 +20,9 @@ async function main() {
     platform.register('person.list.visitors', new ListVisitors(), 5);
     platform.register('person.get.visitor', new GetVisitor(), 5);
     platform.register('welcome.register.visitor', new RegisterVisitor(), 5);
+    platform.register('consolidation.accept', new AcceptConsolidation(), 5);
+    platform.register('consolidation.decline', new DeclineConsolidation(), 5);
+    platform.register('consolidation.record.attendance', new RecordAttendance(), 5);
     await platform.getReady();
 
     // Start the REST automation engine (reads rest.yaml)

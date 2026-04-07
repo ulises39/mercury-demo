@@ -91,7 +91,10 @@ mercury-project/
 │   │   └── get-visitor.ts      # GET /api/visitors/:id
 │   ├── welcome/
 │   │   └── register-visitor.ts # POST /api/visitors
-│   ├── consolidation/          # Consolidation ministry (Step 12+)
+│   ├── consolidation/
+│   │   ├── accept-consolidation.ts   # POST /api/visitors/:id/consolidation/accept
+│   │   ├── decline-consolidation.ts  # POST /api/visitors/:id/consolidation/decline
+│   │   └── record-attendance.ts      # POST /api/visitors/:id/classes/attendance
 │   ├── bsg/                    # Bible Study Group ministry (Step 16+)
 │   ├── resources/
 │   │   ├── application.yml     # Mercury app config (port, log level, etc.)
@@ -192,13 +195,40 @@ curl -s -X POST http://localhost:8300/api/visitors \
 
 ---
 
-### Consolidation Service *(coming soon)*
+### Consolidation Service
 
 | Method | URL | Description |
 |--------|-----|-------------|
 | `POST` | `/api/visitors/:id/consolidation/accept` | Visitor accepts classes |
-| `POST` | `/api/visitors/:id/consolidation/decline` | Visitor declines |
-| `POST` | `/api/visitors/:id/classes/attendance` | Record a class attended |
+| `POST` | `/api/visitors/:id/consolidation/decline` | Visitor declines classes |
+| `POST` | `/api/visitors/:id/classes/attendance` | Record a class attended (1–5) |
+
+**Status transitions:**
+- `accept` — visitor must be `REGISTERED` or `IN_CONSOLIDATION` → sets `CLASSES_ACCEPTED`, resolves open consolidation tasks
+- `decline` — visitor must be `REGISTERED` or `IN_CONSOLIDATION` → sets `CLASSES_DECLINED`, resolves open consolidation tasks
+- `attendance` — visitor must be `CLASSES_ACCEPTED`; body: `{ "classNumber": 1–5 }`
+
+**Class 2 side effect:** recording class 2 automatically creates a `BSG` task and emits `consolidation.bsg.trigger` for the BSGService.
+
+#### Examples
+
+```bash
+# Visitor accepts classes
+curl -s -X POST http://localhost:8300/api/visitors/1/consolidation/accept
+
+# Visitor declines classes
+curl -s -X POST http://localhost:8300/api/visitors/1/consolidation/decline
+
+# Record class 1 attendance
+curl -s -X POST http://localhost:8300/api/visitors/1/classes/attendance \
+  -H "Content-Type: application/json" \
+  -d '{"classNumber": 1}'
+
+# Record class 2 attendance (triggers BSG offer)
+curl -s -X POST http://localhost:8300/api/visitors/1/classes/attendance \
+  -H "Content-Type: application/json" \
+  -d '{"classNumber": 2}'
+```
 
 ---
 
