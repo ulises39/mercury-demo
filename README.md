@@ -1,0 +1,217 @@
+# Church Admin API
+
+A REST API for managing a church's visitor journey, built with [Mercury Composable](https://github.com/Accenture/mercury-nodejs) and TypeScript.
+
+## Overview
+
+The system tracks visitors from their first Sunday visit through consolidation classes and Bible Study Groups (BSG), modeled as an event-driven architecture with three ministries:
+
+| Ministry | Responsibility |
+|----------|---------------|
+| **Welcome** | Registers new visitors and creates consolidation tasks |
+| **Consolidation** | Contacts visitors, offers classes, tracks attendance |
+| **Bible Study Group** | Assigns visitors to weekly groups |
+
+### Visitor Journey
+
+```
+Register → IN_CONSOLIDATION → CLASSES_ACCEPTED → IN_BSG
+                           ↘ CLASSES_DECLINED   ↘ BSG_DECLINED
+```
+
+### Internal Events
+
+| Event | Trigger |
+|-------|---------|
+| `welcome:visitor-registered` | Visitor saved to DB |
+| `consolidation:classes-accepted` | Visitor accepts classes |
+| `consolidation:visitor-declined` | Visitor declines classes |
+| `bsg:group-accepted` | Visitor accepts BSG |
+| `bsg:visitor-declined` | Visitor declines BSG |
+
+---
+
+## Tech Stack
+
+- **Runtime**: Node.js >= 20.18.1
+- **Language**: TypeScript
+- **Framework**: [Mercury Composable](https://github.com/Accenture/mercury-nodejs)
+- **Database**: SQLite via Prisma v7 + better-sqlite3 adapter
+- **Port**: 8300
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 20.18.1
+- npm
+
+### Install & Run
+
+```bash
+# Install dependencies
+npm install
+
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate dev
+
+# Build
+npm run build
+
+# Start
+npm start
+```
+
+### Development
+
+```bash
+npm run build      # compile TypeScript + copy resources
+npm start          # run compiled app
+```
+
+> **Note for new contributors:** Copy `.env.example` to `.env` before running.
+> The SQLite database file (`prisma/dev.db`) is gitignored and created by `prisma migrate dev`.
+
+---
+
+## Project Structure
+
+```
+mercury-project/
+├── src/
+│   ├── lib/
+│   │   └── prisma.ts           # Shared Prisma client singleton
+│   ├── person/                 # Shared visitor identity (PersonService)
+│   │   ├── list-visitors.ts    # GET /api/visitors
+│   │   └── get-visitor.ts      # GET /api/visitors/:id
+│   ├── welcome/                # Welcome ministry (Step 9+)
+│   ├── consolidation/          # Consolidation ministry (Step 12+)
+│   ├── bsg/                    # Bible Study Group ministry (Step 16+)
+│   ├── resources/
+│   │   ├── application.yml     # Mercury app config (port, log level, etc.)
+│   │   ├── rest.yaml           # REST endpoint declarations
+│   │   └── public/
+│   │       └── index.html      # Static placeholder
+│   └── main.ts                 # App bootstrap
+├── prisma/
+│   ├── schema.prisma           # Database schema
+│   └── migrations/             # Migration history
+├── generated/
+│   └── prisma/                 # Auto-generated Prisma client (gitignored)
+└── dist/                       # Compiled output (gitignored)
+```
+
+---
+
+## Database Schema
+
+| Table | Key Fields |
+|-------|-----------|
+| `Visitor` | `name`, `phone`, `scheduleNote`, `status`, timestamps |
+| `Task` | `visitorId`, `ministry`, `description`, `resolved`, `resolvedAt` |
+| `ClassAttendance` | `visitorId`, `classNumber` (1–5), `attendedAt` |
+| `BibleStudyGroup` | `name`, `hostName`, `address`, `zipCode`, `dayOfWeek`, `time` |
+| `VisitorGroup` | `visitorId ↔ groupId` junction |
+
+---
+
+## API Reference
+
+### System Endpoints
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/health` | Health check |
+| `GET` | `/livenessprobe` | Liveness probe |
+| `GET` | `/info` | App info (version, memory, uptime) |
+| `GET` | `/info/routes` | All registered routes |
+
+### Person Service
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/visitors` | List all visitors |
+| `GET` | `/api/visitors?status=<STATUS>` | Filter visitors by journey status |
+| `GET` | `/api/visitors/:id` | Get visitor with class attendance, tasks, and groups |
+
+**Valid `status` values:**
+`REGISTERED` · `IN_CONSOLIDATION` · `CLASSES_ACCEPTED` · `CLASSES_DECLINED` · `IN_BSG` · `BSG_DECLINED`
+
+#### Examples
+
+```bash
+# List all visitors
+curl http://localhost:8300/api/visitors
+
+# Filter by status
+curl "http://localhost:8300/api/visitors?status=REGISTERED"
+
+# Get a specific visitor (with all relations)
+curl http://localhost:8300/api/visitors/1
+```
+
+---
+
+### Welcome Service *(coming soon)*
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `POST` | `/api/visitors` | Register a new visitor |
+
+---
+
+### Consolidation Service *(coming soon)*
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `POST` | `/api/visitors/:id/consolidation/accept` | Visitor accepts classes |
+| `POST` | `/api/visitors/:id/consolidation/decline` | Visitor declines |
+| `POST` | `/api/visitors/:id/classes/attendance` | Record a class attended |
+
+---
+
+### Bible Study Group Service *(coming soon)*
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/bsg/groups` | List all groups sorted by zip code |
+| `POST` | `/api/visitors/:id/bsg/accept` | Visitor accepts BSG |
+| `POST` | `/api/visitors/:id/bsg/decline` | Visitor declines BSG |
+
+---
+
+### Task Service *(coming soon)*
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/tasks` | List tasks (filterable by ministry, date, resolved status) |
+
+---
+
+## Mercury Framework Notes
+
+This project uses Mercury's composable pattern. Each function:
+- Implements the `Composable` interface with a single `handleEvent(evt)` method
+- Is registered under a **route name** (e.g. `person.list.visitors`)
+- Receives and returns `EventEnvelope` objects
+- Is mapped to HTTP via `rest.yaml` declarations
+
+HTTP requests are automatically converted to `AsyncHttpRequest` objects inside the event body:
+
+```typescript
+const req = new AsyncHttpRequest(evt.getBody() as object);
+const id = req.getPathParameter('id');        // path params
+const status = req.getQueryParameter('status'); // query params
+const body = req.getBody();                   // POST/PUT payload
+```
+
+Errors are thrown as `AppException` with an HTTP status code:
+
+```typescript
+throw new AppException(404, 'Visitor not found');
+```

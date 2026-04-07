@@ -1,5 +1,8 @@
 import { AppConfig, Platform, RestAutomation } from 'mercury-composable';
 import path from 'path';
+// Person service
+import { ListVisitors } from './person/list-visitors';
+import { GetVisitor } from './person/get-visitor';
 
 async function main() {
     // Point Mercury to our application.yml (src/resources/ → dist/resources/ after build)
@@ -7,6 +10,9 @@ async function main() {
     AppConfig.getInstance(resourcePath);
 
     const platform = Platform.getInstance();
+    // Register composable functions
+    platform.register('person.list.visitors', new ListVisitors(), 5);
+    platform.register('person.get.visitor', new GetVisitor(), 5);
     await platform.getReady();
 
     // Start the REST automation engine (reads rest.yaml)

@@ -5,7 +5,7 @@
 /dist
 
 # Prisma generated client
-/src/generated/prisma
+/generated/prisma
 
 # Environment variables
 .env

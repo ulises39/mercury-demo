@@ -34,5 +34,14 @@ rest:
     timeout: 10s
 
   #
-  # Application routes — added below as each service is implemented
+  # Person service
   #
+  - service: "person.list.visitors"
+    methods: ['GET']
+    url: "/api/visitors"
+    timeout: 10s
+
+  - service: "person.get.visitor"
+    methods: ['GET']
+    url: "/api/visitors/{id}"
+    timeout: 10s
