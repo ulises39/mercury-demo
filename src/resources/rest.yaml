@@ -71,3 +71,26 @@ rest:
     methods: ['POST']
     url: "/api/visitors/{id}/classes/attendance"
     timeout: 10s
+
+  #
+  # BSG service
+  #
+  - service: "bsg.list.groups"
+    methods: ['GET']
+    url: "/api/bsg/groups"
+    timeout: 10s
+
+  - service: "bsg.create.group"
+    methods: ['POST']
+    url: "/api/bsg/groups"
+    timeout: 10s
+
+  - service: "bsg.accept"
+    methods: ['POST']
+    url: "/api/visitors/{id}/bsg/accept"
+    timeout: 10s
+
+  - service: "bsg.decline"
+    methods: ['POST']
+    url: "/api/visitors/{id}/bsg/decline"
+    timeout: 10s

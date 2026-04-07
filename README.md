@@ -95,7 +95,12 @@ mercury-project/
 │   │   ├── accept-consolidation.ts   # POST /api/visitors/:id/consolidation/accept
 │   │   ├── decline-consolidation.ts  # POST /api/visitors/:id/consolidation/decline
 │   │   └── record-attendance.ts      # POST /api/visitors/:id/classes/attendance
-│   ├── bsg/                    # Bible Study Group ministry (Step 16+)
+│   ├── bsg/
+│   │   ├── list-groups.ts          # GET /api/bsg/groups
+│   │   ├── create-group.ts         # POST /api/bsg/groups
+│   │   ├── accept-bsg.ts           # POST /api/visitors/:id/bsg/accept
+│   │   ├── decline-bsg.ts          # POST /api/visitors/:id/bsg/decline
+│   │   └── bsg-trigger-handler.ts  # internal: consolidation.bsg.trigger
 │   ├── resources/
 │   │   ├── application.yml     # Mercury app config (port, log level, etc.)
 │   │   ├── rest.yaml           # REST endpoint declarations
@@ -232,13 +237,52 @@ curl -s -X POST http://localhost:8300/api/visitors/1/classes/attendance \
 
 ---
 
-### Bible Study Group Service *(coming soon)*
+### Bible Study Group Service
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| `GET` | `/api/bsg/groups` | List all groups sorted by zip code |
-| `POST` | `/api/visitors/:id/bsg/accept` | Visitor accepts BSG |
-| `POST` | `/api/visitors/:id/bsg/decline` | Visitor declines BSG |
+| `GET` | `/api/bsg/groups` | List all groups sorted by zip code (with member count) |
+| `POST` | `/api/bsg/groups` | Create a new group (master data) |
+| `POST` | `/api/visitors/:id/bsg/accept` | Visitor accepts BSG offer |
+| `POST` | `/api/visitors/:id/bsg/decline` | Visitor declines BSG offer |
+
+**Status transitions:**
+- `accept` — visitor must be `CLASSES_ACCEPTED` → sets `IN_BSG`, creates group membership, resolves open BSG tasks
+- `decline` — visitor must be `CLASSES_ACCEPTED` → sets `BSG_DECLINED`, resolves open BSG tasks
+
+**Create group body:**
+```json
+{
+  "name": "North Side Group",
+  "hostName": "John Smith",
+  "address": "123 Main St",
+  "zipCode": "75001",
+  "dayOfWeek": "Wednesday",
+  "time": "19:00"
+}
+```
+
+**Accept body:** `{ "groupId": 1 }`
+
+#### Examples
+
+```bash
+# Create a group
+curl -s -X POST http://localhost:8300/api/bsg/groups \
+  -H "Content-Type: application/json" \
+  -d '{"name":"North Side","hostName":"John Smith","address":"123 Main St","zipCode":"75001","dayOfWeek":"Wednesday","time":"19:00"}'
+
+# List all groups
+curl http://localhost:8300/api/bsg/groups
+
+# Visitor accepts BSG
+curl -s -X POST http://localhost:8300/api/visitors/1/bsg/accept \
+  -H "Content-Type: application/json" \
+  -d '{"groupId": 1}'
+
+# Visitor declines BSG
+curl -s -X POST http://localhost:8300/api/visitors/1/bsg/decline
+```
 
 ---
 

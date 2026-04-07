@@ -9,6 +9,12 @@ import { RegisterVisitor } from './welcome/register-visitor';
 import { AcceptConsolidation } from './consolidation/accept-consolidation';
 import { DeclineConsolidation } from './consolidation/decline-consolidation';
 import { RecordAttendance } from './consolidation/record-attendance';
+// BSG service
+import { ListGroups } from './bsg/list-groups';
+import { CreateGroup } from './bsg/create-group';
+import { AcceptBsg } from './bsg/accept-bsg';
+import { DeclineBsg } from './bsg/decline-bsg';
+import { BsgTriggerHandler } from './bsg/bsg-trigger-handler';
 
 async function main() {
     // Point Mercury to our application.yml (src/resources/ → dist/resources/ after build)
@@ -23,6 +29,11 @@ async function main() {
     platform.register('consolidation.accept', new AcceptConsolidation(), 5);
     platform.register('consolidation.decline', new DeclineConsolidation(), 5);
     platform.register('consolidation.record.attendance', new RecordAttendance(), 5);
+    platform.register('bsg.list.groups', new ListGroups(), 5);
+    platform.register('bsg.create.group', new CreateGroup(), 5);
+    platform.register('bsg.accept', new AcceptBsg(), 5);
+    platform.register('bsg.decline', new DeclineBsg(), 5);
+    platform.register('consolidation.bsg.trigger', new BsgTriggerHandler(), 5);
     await platform.getReady();
 
     // Start the REST automation engine (reads rest.yaml)
