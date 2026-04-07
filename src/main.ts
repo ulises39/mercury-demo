@@ -9,6 +9,8 @@ import { RegisterVisitor } from './welcome/register-visitor';
 import { AcceptConsolidation } from './consolidation/accept-consolidation';
 import { DeclineConsolidation } from './consolidation/decline-consolidation';
 import { RecordAttendance } from './consolidation/record-attendance';
+// Task service
+import { ListTasks } from './tasks/list-tasks';
 // BSG service
 import { ListGroups } from './bsg/list-groups';
 import { CreateGroup } from './bsg/create-group';
@@ -34,6 +36,7 @@ async function main() {
     platform.register('bsg.accept', new AcceptBsg(), 5);
     platform.register('bsg.decline', new DeclineBsg(), 5);
     platform.register('consolidation.bsg.trigger', new BsgTriggerHandler(), 5);
+    platform.register('task.list', new ListTasks(), 5);
     await platform.getReady();
 
     // Start the REST automation engine (reads rest.yaml)

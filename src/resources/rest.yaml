@@ -94,3 +94,11 @@ rest:
     methods: ['POST']
     url: "/api/visitors/{id}/bsg/decline"
     timeout: 10s
+
+  #
+  # Task service
+  #
+  - service: "task.list"
+    methods: ['GET']
+    url: "/api/tasks"
+    timeout: 10s

@@ -91,6 +91,8 @@ mercury-project/
 │   │   └── get-visitor.ts      # GET /api/visitors/:id
 │   ├── welcome/
 │   │   └── register-visitor.ts # POST /api/visitors
+│   ├── tasks/
+│   │   └── list-tasks.ts           # GET /api/tasks
 │   ├── consolidation/
 │   │   ├── accept-consolidation.ts   # POST /api/visitors/:id/consolidation/accept
 │   │   ├── decline-consolidation.ts  # POST /api/visitors/:id/consolidation/decline
@@ -286,11 +288,39 @@ curl -s -X POST http://localhost:8300/api/visitors/1/bsg/decline
 
 ---
 
-### Task Service *(coming soon)*
+### Task Service
 
 | Method | URL | Description |
 |--------|-----|-------------|
-| `GET` | `/api/tasks` | List tasks (filterable by ministry, date, resolved status) |
+| `GET` | `/api/tasks` | List tasks for servant notifications |
+
+**Query parameters (all optional, combinable):**
+
+| Param | Values | Description |
+|-------|--------|-------------|
+| `ministry` | `WELCOME` \| `CONSOLIDATION` \| `BSG` | Filter by owning ministry |
+| `resolved` | `true` \| `false` | Filter by resolved status |
+| `from` | ISO date (e.g. `2026-04-01`) | Tasks created on or after this date |
+| `to` | ISO date (e.g. `2026-04-30`) | Tasks created on or before this date (end of day) |
+| `visitorId` | integer | Tasks for a specific visitor |
+
+Each task in the response includes a `visitor` field with `name`, `phone`, `scheduleNote`, and `status`.
+
+#### Examples
+
+```bash
+# All pending consolidation tasks
+curl "http://localhost:8300/api/tasks?ministry=CONSOLIDATION&resolved=false"
+
+# All BSG tasks created today
+curl "http://localhost:8300/api/tasks?ministry=BSG&from=2026-04-06&to=2026-04-06"
+
+# All tasks for visitor 1
+curl "http://localhost:8300/api/tasks?visitorId=1"
+
+# All unresolved tasks across all ministries
+curl "http://localhost:8300/api/tasks?resolved=false"
+```
 
 ---
 
