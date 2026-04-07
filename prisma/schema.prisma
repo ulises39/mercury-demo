@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+// Journey status a visitor moves through
+enum VisitorStatus {
+  REGISTERED         // Just signed in with Welcome ministry
+  IN_CONSOLIDATION   // Servant has been assigned, not yet contacted
+  CLASSES_ACCEPTED   // Visitor accepted to attend the 5 classes
+  CLASSES_DECLINED   // Visitor declined classes
+  IN_BSG             // Visitor accepted and joined a Bible Study Group
+  BSG_DECLINED       // Visitor declined the Bible Study Group
+}
+
+// Which ministry owns a pending task
+enum Ministry {
+  WELCOME
+  CONSOLIDATION
+  BSG
+}
+
+// ─── Visitor ─────────────────────────────────────────────────────────────────
+
+model Visitor {
+  id              Int           @id @default(autoincrement())
+  name            String
+  phone           String
+  scheduleNote    String        // preferred time/day to be called or messaged
+  status          VisitorStatus @default(REGISTERED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  classAttendance ClassAttendance[]
+  tasks           Task[]
+  groups          VisitorGroup[]
+}
+
+// ─── Task (servant notification records) ─────────────────────────────────────
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  visitorId   Int
+  ministry    Ministry
+  description String   // human-readable note for the servant
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  visitor     Visitor  @relation(fields: [visitorId], references: [id])
+}
+
+// ─── Class Attendance ────────────────────────────────────────────────────────
+
+model ClassAttendance {
+  id          Int      @id @default(autoincrement())
+  visitorId   Int
+  classNumber Int      // 1 through 5
+  attendedAt  DateTime @default(now())
+
+  visitor     Visitor  @relation(fields: [visitorId], references: [id])
+
+  @@unique([visitorId, classNumber]) // can't attend the same class twice
+}
+
+// ─── Bible Study Group ───────────────────────────────────────────────────────
+
+model BibleStudyGroup {
+  id          Int      @id @default(autoincrement())
+  name        String
+  hostName    String
+  address     String
+  zipCode     String
+  dayOfWeek   String   // e.g. "Monday", "Wednesday"
+  time        String   // e.g. "19:00"
+  createdAt   DateTime @default(now())
+
+  members     VisitorGroup[]
+}
+
+// ─── Visitor ↔ Group junction ─────────────────────────────────────────────
+
+model VisitorGroup {
+  id        Int             @id @default(autoincrement())
+  visitorId Int
+  groupId   Int
+  joinedAt  DateTime        @default(now())
+
+  visitor   Visitor         @relation(fields: [visitorId], references: [id])
+  group     BibleStudyGroup @relation(fields: [groupId], references: [id])
+
+  @@unique([visitorId, groupId])
+}
