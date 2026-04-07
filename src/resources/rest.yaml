@@ -45,3 +45,11 @@ rest:
     methods: ['GET']
     url: "/api/visitors/{id}"
     timeout: 10s
+
+  #
+  # Welcome service
+  #
+  - service: "welcome.register.visitor"
+    methods: ['POST']
+    url: "/api/visitors"
+    timeout: 10s

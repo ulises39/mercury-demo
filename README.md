@@ -89,7 +89,8 @@ mercury-project/
 │   ├── person/                 # Shared visitor identity (PersonService)
 │   │   ├── list-visitors.ts    # GET /api/visitors
 │   │   └── get-visitor.ts      # GET /api/visitors/:id
-│   ├── welcome/                # Welcome ministry (Step 9+)
+│   ├── welcome/
+│   │   └── register-visitor.ts # POST /api/visitors
 │   ├── consolidation/          # Consolidation ministry (Step 12+)
 │   ├── bsg/                    # Bible Study Group ministry (Step 16+)
 │   ├── resources/
@@ -157,11 +158,37 @@ curl http://localhost:8300/api/visitors/1
 
 ---
 
-### Welcome Service *(coming soon)*
+### Welcome Service
 
 | Method | URL | Description |
 |--------|-----|-------------|
 | `POST` | `/api/visitors` | Register a new visitor |
+
+**Request body:**
+```json
+{
+  "name": "Jane Doe",
+  "phone": "555-0100",
+  "scheduleNote": "Available on weekday evenings"
+}
+```
+- `name` — required
+- `phone` — required
+- `scheduleNote` — optional (preferred time/day to be contacted)
+
+**Response:** HTTP 201 with the created visitor object.
+
+**Side effects:**
+- Creates a `CONSOLIDATION` task so a servant knows to follow up.
+- Emits `welcome.visitor.registered` internal event (consumed by ConsolidationService once implemented).
+
+#### Example
+
+```bash
+curl -s -X POST http://localhost:8300/api/visitors \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Jane Doe","phone":"555-0100","scheduleNote":"Weekday evenings"}'
+```
 
 ---
 

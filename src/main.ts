@@ -3,6 +3,8 @@ import path from 'path';
 // Person service
 import { ListVisitors } from './person/list-visitors';
 import { GetVisitor } from './person/get-visitor';
+// Welcome service
+import { RegisterVisitor } from './welcome/register-visitor';
 
 async function main() {
     // Point Mercury to our application.yml (src/resources/ → dist/resources/ after build)
@@ -13,6 +15,7 @@ async function main() {
     // Register composable functions
     platform.register('person.list.visitors', new ListVisitors(), 5);
     platform.register('person.get.visitor', new GetVisitor(), 5);
+    platform.register('welcome.register.visitor', new RegisterVisitor(), 5);
     await platform.getReady();
 
     // Start the REST automation engine (reads rest.yaml)
