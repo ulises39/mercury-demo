@@ -1,0 +1,21 @@
+# Church Administration System — Mercury app config
+
+application.name: 'church-admin'
+
+info.app:
+  version: '1.0.0'
+  description: 'Church visitor journey management API'
+
+# HTTP port
+server.port: 8300
+
+# Logging
+log:
+  format: text
+  level: INFO
+
+# REST endpoint definitions (classpath: resolves relative to dist/resources/)
+yaml.rest.automation: 'classpath:/rest.yaml'
+
+# Static HTML folder (classpath: resolves relative to dist/resources/)
+static.html.folder: 'classpath:/public'
